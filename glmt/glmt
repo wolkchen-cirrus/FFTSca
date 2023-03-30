@@ -1,0 +1,66 @@
+#!/bin/sh
+
+DIA=${@: -1}
+DEBUG=0
+BSC=0
+WLEN=532
+M="1.33j0"
+REDO=0
+
+# Process inputs
+while getopts ":rdbwm:" option;
+do
+  case $option in
+    r) REDO=1;;
+    d) DEBUG=1;;
+    b) BSC=1;;
+    w) WLEN=$OPTARG;;
+    m) M=$OPTARG;;
+    *) echo "Invalid Option $OPTARG" && exit 1;;
+  esac
+done
+
+# Set up env
+JOBS=$(ls -d -- job*/)
+cd ${SIM_DIR}
+if [ $REDO == 1 ]; then
+  rm -rf job*
+elif [ ${#JOBS[@]} -gt 0 ]; then
+  echo "Job already exists, clear before proceeding."
+  exit 1
+fi
+
+# Write options to logs
+pp && pc && pb
+
+# Avoid segfaults
+ulimit -s unlimited
+
+# Run glmt
+${SIM_DIR}/init_glmt.o >> ${LOG_DIR}/init_glmt_log
+${SIM_DIR}/spher_f_mono_HB.o >> ${LOG_DIR}/mie_log
+${SIM_DIR}/glmt.o >> ${LOG_DIR}/glmt_log
+${SIM_DIR}/final_glmt.o >> ${LOG_DIR}/final_glmt_log
+
+######################
+
+pp () {
+  RM="$(cut -d'j' -f1 <<<"$M")"
+  IM="$(cut -d'j' -f2 <<<"$M")"
+  DSt="$(cut -d':' -f1 <<<"$DIA")"
+  DE="$(cut -d':' -f2 <<<"$DIA")"
+  DSp="$(cut -d':' -f3 <<<"$DIA")"
+  STR="$DSt\t$DE\t$DSp\n$RM\t$IM"
+  echo $STR > "$SIM_DIR/Parameters for particle.txt"
+}
+
+pc () {
+  STR="2\n$BSC\t0\t1\t0"
+  echo $STR > "$SIM_DIR/Parameters for calculations.txt"
+}
+
+pb () {
+  WL=$(($1 / 1000))
+  STR="100\t100\t$WL\n0.0\t0.0\t0"
+  echo $STR > "$SIM_DIR/Parameters of incident beam.txt"
+}

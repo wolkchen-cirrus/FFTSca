@@ -1,0 +1,6 @@
+job*/
+*.xls
+*.sublime*
+venv/
+.idea/
+spher.*
