@@ -1,7 +1,2 @@
-0.1	10	100
+0.1	4.1	2
 1.33	0
-
-
-=================================================================================================
-diaparticle	diaparticleStart	diaparticleEnd	diaparticleSteps	in microns
-rm	im	real & imaginary parts of refractive index

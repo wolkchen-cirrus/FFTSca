@@ -1,15 +1,2 @@
 2
 0	0	1	0
-
-===================================================================
-
-=================================================================================================================
-method				method=0£¬Angular spectra Decomposition
-				method=1£¬2D-quadrature of GLMT
-				method=2£¬Localized approximation
-
-task[i]				task[0]=1£¬BSC calculation
-				task[1]=1£¬incident beam in xy plane
-				task[2]=1£¬far field scattering
-				task[3]=1£¬near field scattering in xz plane
-=================================================================================================================

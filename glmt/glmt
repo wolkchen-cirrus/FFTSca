@@ -1,37 +1,59 @@
-#!/bin/sh
+#!/bin/bash
 
 DIA=${@: -1}
-DEBUG=0
 BSC=0
-WLEN=532
+WLEN=532.0
 M="1.33j0"
-REDO=0
+FFS_OUT=0
+GLMT_OUT=0
+MIE_OUT=0
+OPATH=$PWD
+
+######################
+PartParam () {
+  RM="$(cut -d'j' -f1 <<<"$M")"
+  IM="$(cut -d'j' -f2 <<<"$M")"
+  DSt="$(cut -d':' -f1 <<<"$DIA")"
+  DE="$(cut -d':' -f3 <<<"$DIA")"
+  DSp="$(cut -d':' -f2 <<<"$DIA")"
+  echo -en "$DSt"'\t'"$DE"'\t'"$DSp"'\n'"$RM"'\t'"$IM" > "$SIM_DIR/Parameters for particle.txt"
+}
+
+CalcParam () {
+  echo -en '2\n'"$BSC"'\t0\t1\t0' > "$SIM_DIR/Parameters for calculations.txt"
+}
+
+BeamParam () {
+  echo -en '100\t100\t' > "$SIM_DIR/Parameters of incident beam.txt"
+  printf %.10f\\n $(bc -l <<< $WLEN/1000.0) >> "$SIM_DIR/Parameters of incident beam.txt"
+  echo -en '0.0\t0.0\t0' >> "$SIM_DIR/Parameters of incident beam.txt"
+}
+######################
 
 # Process inputs
-while getopts ":rdbwm:" option;
-do
-  case $option in
-    r) REDO=1;;
-    d) DEBUG=1;;
+declare opt
+declare OPTARG
+declare OPTIND
+while getopts "bw:m:gnf" opt; do
+  case $opt in
     b) BSC=1;;
     w) WLEN=$OPTARG;;
     m) M=$OPTARG;;
-    *) echo "Invalid Option $OPTARG" && exit 1;;
+    g) GLMT_OUT=1;;
+    n) MIE_OUT=1;;
+    f) FFS_OUT=1;;
+    \?) echo "Invalid Option $OPTARG" && exit 1;;
   esac
 done
 
 # Set up env
-JOBS=$(ls -d -- job*/)
 cd ${SIM_DIR}
-if [ $REDO == 1 ]; then
-  rm -rf job*
-elif [ ${#JOBS[@]} -gt 0 ]; then
-  echo "Job already exists, clear before proceeding."
-  exit 1
-fi
+JOBID=$(($(cat "jobID.txt")+1))
 
 # Write options to logs
-pp && pc && pb
+PartParam
+CalcParam
+BeamParam
 
 # Avoid segfaults
 ulimit -s unlimited
@@ -42,25 +64,47 @@ ${SIM_DIR}/spher_f_mono_HB.o >> ${LOG_DIR}/mie_log
 ${SIM_DIR}/glmt.o >> ${LOG_DIR}/glmt_log
 ${SIM_DIR}/final_glmt.o >> ${LOG_DIR}/final_glmt_log
 
-######################
+# Add files to standard output
+echo 'START'
+echo '~~~'
+# Mie scattering output
+if [ $MIE_OUT == 1 ]; then
+  echo "MIE"
+  cat "job$JOBID/CEXT_MIE"
+  echo '~~~'
+fi
+# GLMT scattering output
+if [ $GLMT_OUT == 1 ]; then
+  echo "GLMT"
+  cat "job$JOBID/CEXT_GLMT"
+  echo '~~~'
+fi
+# Angular far-field scattering output
+if [ $FFS_OUT == 1 ]; then
+  cd "${SIM_DIR}/job$JOBID"
+  shopt -s nullglob
+  FFS_FILES=(LAM*)
+  shopt -u nullglob
+  for ((i = 0; i < ${#FFS_FILES[@]}; i++))
+  do
+    echo ${FFS_FILES[$i]}
+    cat "${FFS_FILES[$i]}"
+    echo '~~~'
+  done
+  cd ${SIM_DIR}
+fi
+echo 'END'
 
-pp () {
-  RM="$(cut -d'j' -f1 <<<"$M")"
-  IM="$(cut -d'j' -f2 <<<"$M")"
-  DSt="$(cut -d':' -f1 <<<"$DIA")"
-  DE="$(cut -d':' -f2 <<<"$DIA")"
-  DSp="$(cut -d':' -f3 <<<"$DIA")"
-  STR="$DSt\t$DE\t$DSp\n$RM\t$IM"
-  echo $STR > "$SIM_DIR/Parameters for particle.txt"
-}
+cd $OPATH
 
-pc () {
-  STR="2\n$BSC\t0\t1\t0"
-  echo $STR > "$SIM_DIR/Parameters for calculations.txt"
-}
 
-pb () {
-  WL=$(($1 / 1000))
-  STR="100\t100\t$WL\n0.0\t0.0\t0"
-  echo $STR > "$SIM_DIR/Parameters of incident beam.txt"
-}
+
+
+
+
+
+
+
+
+
+
