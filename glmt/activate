@@ -1,5 +1,0 @@
-#!/bin/sh
-
-export SIM_DIR=$(dirname "$0")
-export LOG_DIR="/tmp/"
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/bin/gcc

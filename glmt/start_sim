@@ -24,7 +24,7 @@ CalcParam () {
 }
 
 BeamParam () {
-  echo -en '100\t100\t' > "$SIM_DIR/Parameters of incident beam.txt"
+  echo -en '100\t40\t' > "$SIM_DIR/Parameters of incident beam.txt"
   printf %.10f\\n $(bc -l <<< $WLEN/1000.0) >> "$SIM_DIR/Parameters of incident beam.txt"
   echo -en '0.0\t0.0\t0' >> "$SIM_DIR/Parameters of incident beam.txt"
 }
@@ -49,6 +49,10 @@ done
 # Set up env
 cd ${SIM_DIR}
 JOBID=$(($(cat "jobID.txt")+1))
+export SIM_DIR=$(pwd)
+export LOG_DIR="/tmp/"
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/bin/gcc
+export OMP_NUM_THREADS=1
 
 # Write options to logs
 PartParam
@@ -59,10 +63,10 @@ BeamParam
 ulimit -s unlimited
 
 # Run glmt
-${SIM_DIR}/init_glmt.o >> ${LOG_DIR}/init_glmt_log
-${SIM_DIR}/spher_f_mono_HB.o >> ${LOG_DIR}/mie_log
-${SIM_DIR}/glmt.o >> ${LOG_DIR}/glmt_log
-${SIM_DIR}/final_glmt.o >> ${LOG_DIR}/final_glmt_log
+${SIM_DIR}/init_glmt.o > ${LOG_DIR}/init_glmt_log
+${SIM_DIR}/spher_f_mono_HB.o > ${LOG_DIR}/mie_log
+${SIM_DIR}/glmt.o > ${LOG_DIR}/glmt_log
+${SIM_DIR}/final_glmt.o > ${LOG_DIR}/final_glmt_log
 
 # Add files to standard output
 echo 'START'
