@@ -8,6 +8,7 @@ FFS_OUT=0
 GLMT_OUT=0
 MIE_OUT=0
 OPATH=$PWD
+BSC_PARAM="100,40"
 
 ######################
 PartParam () {
@@ -24,7 +25,9 @@ CalcParam () {
 }
 
 BeamParam () {
-  echo -en '100\t40\t' > "$SIM_DIR/Parameters of incident beam.txt"
+  BX="$(cut -d',' -f1 <<<"$BSC_PARAM")"
+  BY="$(cut -d',' -f2 <<<"$BSC_PARAM")"
+  echo -en "$BX"'\t'"$BY"'\t' > "$SIM_DIR/Parameters of incident beam.txt"
   printf %.10f\\n $(bc -l <<< $WLEN/1000.0) >> "$SIM_DIR/Parameters of incident beam.txt"
   echo -en '0.0\t0.0\t0' >> "$SIM_DIR/Parameters of incident beam.txt"
 }
@@ -34,9 +37,10 @@ BeamParam () {
 declare opt
 declare OPTARG
 declare OPTIND
-while getopts "bw:m:gnf" opt; do
+while getopts "bp:w:m:gnf" opt; do
   case $opt in
     b) BSC=1;;
+    p) BSC_PARAM=$OPTARG;;
     w) WLEN=$OPTARG;;
     m) M=$OPTARG;;
     g) GLMT_OUT=1;;
